@@ -25,6 +25,21 @@ object MorphismsTest extends TestSuite {
       'increment - {
         nums.catamorphism(Nil: List[Int]) { case (a, bs) => Cons(a + 1, bs) } ==> List(5, 7, 9, 11, 21, 45)
       }
+      'fusionLaw - {
+        val b = 4
+        val f = (a: Int) => a * 2
+        val x = (a: Int, b: Int) => a * 2 + b
+        val + = (a: Int, b: Int) => a + b
+
+        val c = f(b)
+        f((+) (3, 5)) ==> x(3, f(5))
+
+        val input = List(3, 5, 7)
+        val left = f compose catamorphism(b)(+)
+        val right = catamorphism(c)(x)
+        left(input) ==> (4 + 3 + 5 + 7) * 2
+        left(input) ==> right(input)
+      }
     }
     'anamorphism - {
       'zip - {
@@ -62,10 +77,10 @@ object MorphismsTest extends TestSuite {
     }
     'paramorphism - {
       'factorial - {
-        paramorphism(1){case (n, m) => (n + 1) * m}(5) ==> 120
+        paramorphism(1) { case (n, m) => (n + 1) * m }(5) ==> 120
       }
       'tails - {
-        val tails = paramorphism(Cons(Nil : List[Int], Nil : List[Int])){ case (a, (as, tls)) => Cons(Cons(a, as), tls) }
+        val tails = paramorphism(Cons(Nil: List[Int], Nil: List[Int])) { case (a, (as, tls)) => Cons(Cons(a, as), tls) }
         tails(List(4, 6, 8)) ==> List(List(4, 6, 8), List(6, 8), List(8), Nil)
       }
     }
