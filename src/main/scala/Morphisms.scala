@@ -1,6 +1,6 @@
 object Morphisms {
 
-  trait List[+T]
+  sealed trait List[+T]
 
   case object Nil extends List[Nothing] {
     override def toString: String = "Nil"
@@ -60,60 +60,22 @@ object Morphisms {
     h
   }
 
-  def main(args: Array[String]): Unit = {
-
-    val nums: List[Int] = List(4, 6, 8, 10, 20, 44)
-    println(s"Nums = $nums")
-
-    // Catamorphisms
-
-    val sum = nums.catamorphism(0)(_ + _)
-    println(s"Sum = $sum")
-
-    val length = nums.catamorphism(0) { case (_, n) => n + 1 }
-    println(s"Length = $length")
-
-    val filtered = nums.catamorphism(Nil: List[Int]) { case (a, as) => if (a % 4 == 0) Cons(a, as) else as }
-    println(s"Filtered to modulo 4 = $filtered")
-
-    val mapIncrementC = nums.catamorphism(Nil: List[Int]) { case (a, bs) => Cons(a + 1, bs) }
-    println(s"Map incremented with Catamorphism = $mapIncrementC")
-
-    // Anamorphisms
-
-    val labels = List("a", "b", "c", "d")
-    println(s"Labels = $labels")
-
-    val zip = (nums, labels).anamorphism {
-      case (as, bs) => as == Nil || bs == Nil
-    } {
-      case (Cons(a, as), Cons(b, bs)) => ((a, b), (as, bs))
-      case _ => throw new Exception("Impossible because of the predicate")
+  def paramorphism(b: Int)(f: (Int, Int) => Int): Int => Int = {
+    def h(a: Int): Int = a match {
+      case 0 => b
+      case n => f(n - 1, h(n - 1))
     }
-    println(s"Zipped = $zip")
 
-    // in the example predicate was _ => false, and an infinite list
-    val iterate = anamorphism[Int, Int](p => p > 10)(n => (n, n + 1))
-    println(iterate(0))
+    h
+  }
 
-    val mapIncrementA = nums.anamorphism((_: List[Int]) == Nil) {
-      case Cons(a, as) => (a + 1, as)
-      case _ => throw new Exception("Impossible because of the predicate")
+  def paramorphism[T](b: List[T])(f: (T, (List[T], List[T])) => List[T]): List[T] => List[T] = {
+    def h(a: List[T]): List[T] = a match {
+      case Nil => b
+      case Cons(a, as) => f(a, (as, h(as)))
     }
-    println(s"Map incremented with Anamorphism = $mapIncrementA")
 
-    // Hylomorphisms
-
-    val factorial = hylomorphism[Int, Int, Int](1)(_ * _)(_ == 0)(n => (n, n - 1))
-    val factorialAlt = 5.hylomorphism(1)((_: Int) * _)(_ == 0)(n => (n, n - 1))
-    val factorialZero = 0.hylomorphism(1)((_: Int) * _)(_ == 0)(n => (n, n - 1))
-    println(s"Factorial 5 = ${factorial(5)} or $factorialAlt")
-    println(s"Factorial 0 = $factorialZero")
-
-    // Paramorphisms
-
-
-
+    h
   }
 
 }
